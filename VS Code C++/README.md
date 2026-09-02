@@ -1,8 +1,8 @@
 # PlatformIO projects
 
-Fourteen Arduino Uno sketches living in one PlatformIO project. Instead of a
-folder per sketch, there's a **build environment** per sketch, and each one
-compiles exactly one file.
+Fifteen sketches — fourteen Arduino Uno, one ESP32 — living in one PlatformIO
+project. Instead of a folder per sketch, there's a **build environment** per
+sketch, and each one compiles exactly one file.
 
 ## How the one-project-many-sketches trick works
 
@@ -17,7 +17,7 @@ Then each environment adds its own single file back in:
 
 ```ini
 [env:radar]
-build_src_filter = ${env.build_src_filter} +<Arduino Uno/007-Radar.cpp>
+build_src_filter = ${env.build_src_filter} +<Arduino Uno/007-Radar/007-Radar.cpp>
 ```
 
 Without that, the compiler would see fourteen `setup()` and `loop()` functions
@@ -38,11 +38,10 @@ Pass `-e <env>` to pick a sketch, or use the **PROJECT TASKS** panel in the
 PlatformIO sidebar, which lists every environment with its own Build / Upload /
 Monitor buttons — no need to edit `platformio.ini` as you work.
 
-`platformio.ini` sets `default_envs = esp32`, but that project isn't part of
-this repo (see the note at the bottom), so **always pass `-e <env>`** rather
-than running a bare `pio run`.
+`platformio.ini` sets `default_envs = esp32`, so a bare `pio run` builds only
+that one.
 
-## Projects
+## Projects — Arduino Uno
 
 | # | Project | env | What it does |
 |---|---|---|---|
@@ -61,14 +60,26 @@ than running a bare `pio run`.
 | 012 | [Relay + photoresistor](src/Arduino%20Uno/012-RelayPhotoresistor) | `relay-photoresistor` | Relay switches on when it gets dark |
 | 013 | [PC triggers](src/Arduino%20Uno/013-Triggers) | `triggers` | Reports light and IR events for a PC app to turn into keystrokes |
 
-## A note on the ESP32 environment
+## Projects — ESP32
 
-`platformio.ini` also carries an `[env:esp32]` section, but the sketch it
-points at isn't in this repo — that project is kept private. The environment is
-left in the file because it's still used locally; it just won't build from a
-fresh clone.
+| # | Project | env | What it does |
+|---|---|---|---|
+| 000 | [**blinkingLED**](src/ESP32/000-blinkingLED) | `esp32` | The board joins the WiFi and serves its own web page, with a live status readout and a button that blinks its LED |
 
-Everything else here is Arduino Uno.
+Different board, so it has its own `[env:esp32]` section with its own platform,
+its own 115200 baud rate, and no `lib_deps` — the AVR libraries below (`Servo`
+especially) don't build for ESP32.
+
+Two things it needs that the Uno sketches don't:
+
+- **A `secrets.h`** with your WiFi credentials. Copy
+  [`secrets.example.h`](src/ESP32/000-blinkingLED/secrets.example.h) to `secrets.h`
+  in the same folder and fill it in. The real one is gitignored, so it never
+  gets committed — which means **this project will not build until you create
+  it**.
+- **Two upload commands.** `-t upload` sends the firmware, `-t uploadfs` sends
+  the web page in `data/`. They write different flash partitions, and skipping
+  the second leaves the page missing.
 
 ## Libraries
 

@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ESP32</title>
+<style>
+  body {
+    margin: 0;
+    padding: 2rem 1rem;
+    font-family: system-ui, sans-serif;
+    background: #10151c;
+    color: #e6edf3;
+    display: flex;
+    justify-content: center;
+  }
+  main { width: 100%; max-width: 26rem; }
+  h1 { font-size: 1.25rem; margin: 0 0 1.5rem; font-weight: 600; }
+  .row {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.7rem 0;
+    border-bottom: 1px solid #232c38;
+  }
+  .label { color: #8b98a8; }
+  .value { font-variant-numeric: tabular-nums; }
+  button {
+    width: 100%;
+    margin-top: 1.5rem;
+    padding: 0.8rem;
+    font: inherit;
+    color: #10151c;
+    background: #58a6ff;
+    border: 0;
+    border-radius: 0.5rem;
+    cursor: pointer;
+  }
+  button:active { background: #4090e0; }
+</style>
+</head>
+<body>
+<main>
+  <h1>ESP32 status</h1>
+
+  <div class="row"><span class="label">IP address</span><span class="value" id="ip">--</span></div>
+  <div class="row"><span class="label">Signal</span><span class="value" id="rssi">--</span></div>
+  <div class="row"><span class="label">Uptime</span><span class="value" id="uptime">--</span></div>
+  <div class="row"><span class="label">Free memory</span><span class="value" id="heap">--</span></div>
+
+  <button id="blink">Blink the LED</button>
+</main>
+
+<script>
+  function refresh() {
+    fetch('/status')
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        document.getElementById('ip').textContent = d.ip;
+        document.getElementById('rssi').textContent = d.rssi + ' dBm';
+        document.getElementById('heap').textContent = Math.round(d.heap / 1024) + ' KB';
+
+        var s = Math.floor(d.uptime / 1000);
+        var m = Math.floor(s / 60);
+        var h = Math.floor(m / 60);
+        document.getElementById('uptime').textContent =
+          h + 'h ' + (m % 60) + 'm ' + (s % 60) + 's';
+      })
+      .catch(function () { /* board rebooting or out of range */ });
+  }
+
+  document.getElementById('blink').addEventListener('click', function () {
+    fetch('/blink');
+  });
+
+  refresh();
+  setInterval(refresh, 2000);
+</script>
+</body>
+</html>
