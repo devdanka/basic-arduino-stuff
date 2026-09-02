@@ -1,0 +1,27 @@
+{
+  "folders": [
+    {
+      "name": "PlatformIO (Uno + ESP32)",
+      "path": "VS Code C++"
+    },
+    {
+      "name": "Arduino IDE sketches",
+      "path": "Arduino IDE C++"
+    },
+    {
+      "name": "Repo root (README, LICENSE)",
+      "path": "."
+    }
+  ],
+  "settings": {
+    "files.associations": {
+      "*.ino": "cpp"
+    },
+    "search.exclude": {
+      "**/.pio": true
+    },
+    "files.exclude": {
+      "**/.pio": true
+    }
+  }
+}
