@@ -33,8 +33,7 @@ except ImportError:
 
 CHUNK = 1024
 LINK_SETTLE = 2.5          # Windows dials the RFCOMM link after the port opens
-HELLO_TIMEOUT = 24.0       # total time to keep asking one port for a READY
-RETRY_EVERY = 3.0          # resend the header this often while waiting
+HELLO_TIMEOUT = 24.0
 CHUNK_TIMEOUT = 20.0       # a flash-write ack should never take this long
 
 
@@ -75,10 +74,6 @@ def handshake(port, size, password, verbose=True):
             print("cannot open ({})".format(getattr(exc, "strerror", None) or exc))
         return None
 
-    # Opening the COM port returns at once, but Windows only dials the actual
-    # Bluetooth link afterwards, and anything written before that link is up
-    # gets dropped on the floor. Hence the settle, and hence re-sending the
-    # header rather than asking once and giving up.
     time.sleep(LINK_SETTLE)
     try:
         link.reset_input_buffer()
@@ -86,44 +81,39 @@ def handshake(port, size, password, verbose=True):
         pass
 
     header = "BTOTA {} {}\n".format(size, password).encode()
-    deadline = time.time() + HELLO_TIMEOUT
+    try:
+        if link.write(header) != len(header):
+            raise IOError("incomplete upload header")
+        link.flush()
+    except (OSError, serial.SerialException):
+        link.close()
+        if verbose:
+            print("could not send upload header.")
+        return None
+
+    deadline = time.monotonic() + HELLO_TIMEOUT
     buf = b""
 
-    while time.time() < deadline:
+    while time.monotonic() < deadline:
         try:
-            link.write(header)
-            link.flush()
-        except (serial.SerialTimeoutException, OSError, serial.SerialException):
+            buf += link.read(64)
+        except (OSError, serial.SerialException):
             link.close()
             if verbose:
-                print("not writable - this is the listen-only port.")
+                print("link dropped.")
             return None
 
-        until = time.time() + RETRY_EVERY
-        while time.time() < until:
-            try:
-                buf += link.read(64)
-            except (OSError, serial.SerialException):
-                link.close()
+        while b"\n" in buf:
+            reply, _, buf = buf.partition(b"\n")
+            reply = reply.strip().decode("utf-8", "replace")
+            if reply == "READY":
                 if verbose:
-                    print("link dropped.")
-                return None
-
-            while b"\n" in buf:
-                reply, _, buf = buf.partition(b"\n")
-                reply = reply.strip().decode("utf-8", "replace")
-                if reply == "READY":
-                    if verbose:
-                        print("ready.")
-                    link.write_timeout = 30     # the data phase needs longer
-                    return link
-                if reply.startswith("ERR"):
-                    link.close()
-                    sys.exit("Board refused the upload: {}".format(reply[4:].strip()))
-                # anything else is ordinary log output from the board's
-                # Bluetooth monitor - ignore it and keep listening
-        if verbose:
-            print(".", end="", flush=True)
+                    print("ready.")
+                link.write_timeout = 30
+                return link
+            if reply.startswith("ERR"):
+                link.close()
+                sys.exit("Board refused the upload: {}".format(reply[4:].strip()))
 
     link.close()
     if verbose:

@@ -105,6 +105,8 @@ void updateLed() {
   }
 }
 
+void handleBluetoothUpload();
+
 bool connectToWiFi() {
   // Without this you just get a silent 20 s timeout and no hint as to why.
   if (String(ssid) == "YOUR_WIFI_NAME") {
@@ -129,6 +131,7 @@ bool connectToWiFi() {
 
   unsigned long start = millis();
   while (WiFi.status() != WL_CONNECTED && millis() - start < timeout) {
+    handleBluetoothUpload();
     updateLed();                // blink while we wait
     delay(10);
   }

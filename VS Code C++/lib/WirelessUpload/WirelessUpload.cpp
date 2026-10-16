@@ -118,6 +118,7 @@ bool WirelessUploadClass::connectWiFi() {
 
   unsigned long start = millis();
   while (WiFi.status() != WL_CONNECTED && millis() - start < kWiFiTimeout) {
+    pumpBluetooth();
     delay(10);
   }
 
