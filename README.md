@@ -1,12 +1,8 @@
 # Arduino Projects
 
-Sketches i made while learning electronics. Feel free to check them out.
-There are 2 folders:
+My Arduino Uno and ESP32 learning projects. Each sketch has a short README explaining what it does.
 
-- Arduino IDE C++
-- VS Code C++
+- `Arduino IDE C++/`: 11 sketches for Arduino IDE.
+- `VS Code C++/`: PlatformIO examples and shared wireless-upload helpers.
 
-There is a README for each individual project that consists of which parts to use and wiring
-
-Enjoy
-
+Open `arduino-projects.code-workspace` to work in VS Code.
